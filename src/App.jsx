@@ -1,44 +1,78 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "./App.css";
 
 function App() {
     const [task, setTask] = useState("");
     const [tasks, setTasks] = useState([]);
 
-    function addTask() {
+    // Load tasks from MongoDB
+    useEffect(() => {
+        fetchTasks();
+    }, []);
+
+    async function fetchTasks() {
+        try {
+            const response = await axios.get("/api/tasks");
+            setTasks(response.data);
+        } catch (error) {
+            console.error("Error loading tasks:", error);
+            alert("Unable to load tasks");
+        }
+    }
+
+    // Add task
+    async function addTask() {
         if (task.trim() === "") {
             alert("Please enter a task");
             return;
         }
 
-        const newTask = {
-            id: Date.now(),
-            title: task,
-            status: "Pending"
-        };
+        try {
+            await axios.post("/api/tasks", {
+                title: task
+            });
 
-        setTasks([...tasks, newTask]);
-        setTask("");
+            setTask("");
+            fetchTasks();
+        } catch (error) {
+            console.error("Error adding task:", error);
+            alert("Unable to add task");
+        }
     }
 
-    function updateStatus(id, status) {
-        setTasks(tasks.map((item) =>
-            item.id === id
-                ? { ...item, status: status }
-                : item
-        ));
+    // Update task status
+    async function updateStatus(id, status) {
+        try {
+            await axios.patch(`/api/tasks/${id}`, {
+                status: status
+            });
+
+            fetchTasks();
+        } catch (error) {
+            console.error("Error updating task:", error);
+            alert("Unable to update task");
+        }
     }
 
-    function deleteTask(id) {
-        setTasks(tasks.filter((item) => item.id !== id));
+    // Delete task
+    async function deleteTask(id) {
+        try {
+            await axios.delete(`/api/tasks/${id}`);
+            fetchTasks();
+        } catch (error) {
+            console.error("Error deleting task:", error);
+            alert("Unable to delete task");
+        }
     }
 
+    // Display tasks by status
     function showTasks(status) {
         return tasks
             .filter((item) => item.status === status)
             .map((item) => (
-                <div className="task-card" key={item.id}>
+                <div className="task-card" key={item._id}>
                     <h6>{item.title}</h6>
                     <p>Status: {item.status}</p>
 
@@ -47,7 +81,7 @@ function App() {
                         {status !== "Pending" && (
                             <button
                                 className="btn btn-info btn-sm"
-                                onClick={() => updateStatus(item.id, "Pending")}
+                                onClick={() => updateStatus(item._id, "Pending")}
                             >
                                 Mark as Pending
                             </button>
@@ -56,7 +90,7 @@ function App() {
                         {status !== "Ongoing" && (
                             <button
                                 className="btn btn-info btn-sm"
-                                onClick={() => updateStatus(item.id, "Ongoing")}
+                                onClick={() => updateStatus(item._id, "Ongoing")}
                             >
                                 Mark as Ongoing
                             </button>
@@ -65,7 +99,7 @@ function App() {
                         {status !== "Completed" && (
                             <button
                                 className="btn btn-success btn-sm"
-                                onClick={() => updateStatus(item.id, "Completed")}
+                                onClick={() => updateStatus(item._id, "Completed")}
                             >
                                 Mark as Completed
                             </button>
@@ -73,7 +107,7 @@ function App() {
 
                         <button
                             className="btn btn-danger btn-sm"
-                            onClick={() => deleteTask(item.id)}
+                            onClick={() => deleteTask(item._id)}
                         >
                             Delete Task
                         </button>
