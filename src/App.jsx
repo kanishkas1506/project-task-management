@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
-
+axios.defaults.baseURL = "https://project-task-management-qg23.onrender.com";
 function App() {
     const [task, setTask] = useState("");
     const [tasks, setTasks] = useState([]);
